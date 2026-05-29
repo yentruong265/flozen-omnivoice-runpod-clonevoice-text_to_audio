@@ -1,17 +1,18 @@
-# FlozenAI Voice Backend - GPT TTS via RunPod FIXED
+# FlozenAI Voice Backend - Clone Voice + Text To Audio
 
-Bản này sửa lỗi OpenAI `unsupported_country_region_territory` khi Cloudflare Worker gọi thẳng OpenAI TTS.
+## Logic vận hành
 
-## Logic mới nè
-
-- User chọn voice GPT: Cloudflare Worker gọi RunPod với `action: "openai_tts"`; RunPod gọi `gpt-4o-mini-tts` và upload audio lên R2.
-- User chọn voice public/clone: Cloudflare Worker gọi RunPod với `action: "text_to_audio"`; RunPod dùng OmniVoice và upload audio lên R2.
+- GPT voice: Frontend → Cloudflare Worker → RunPod → OpenAI `gpt-4o-mini-tts` → upload audio lên R2.
+- Voice public / voice clone: Frontend → Cloudflare Worker → RunPod → OmniVoice → upload audio lên R2.
+- Cloudflare Worker tạo `job_id`, lưu trạng thái vào bảng `jobs`, frontend poll `/api/job/:job_id` giống các luồng video cũ.
+- Vì đây là luồng audio, Worker vẫn lưu URL audio vào cột `result_video_url` để tái sử dụng dashboard/status hiện tại, đồng thời trả thêm `result_audio_url` và `audio_url`.
 
 ## ENV RunPod bắt buộc
 
 ```env
 OPENAI_API_KEY=sk-xxxx
 OPENAI_TTS_MODEL=gpt-4o-mini-tts
+
 R2_ACCOUNT_ID=xxxx
 R2_ACCESS_KEY_ID=xxxx
 R2_SECRET_ACCESS_KEY=xxxx
@@ -59,3 +60,19 @@ DEVICE=cuda:0
   }
 }
 ```
+
+## ENV Cloudflare Worker
+
+```env
+RUNPOD_OMNIVOICE_ENDPOINT_URL=https://api.runpod.ai/v2/xxxxx/run
+RUNPOD_OMNIVOICE_API_KEY=xxxxx
+R2_PUBLIC_BASE_URL=https://pub-93764efb31b244babb2bc41d8cb399bb.r2.dev
+MAX_VOICE_SAMPLE_MB=30
+OMNIVOICE_DEFAULT_NUM_STEP=16
+```
+
+Bindings:
+- `DB` = D1 đang dùng cho bảng `jobs`
+- `R2_BUCKET` = bucket `flozenai-videos`
+
+> Không cần `OPENAI_API_KEY` trên Cloudflare Worker. Key OpenAI phải set trên RunPod.
