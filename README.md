@@ -2,7 +2,7 @@
 
 Bản này sửa lỗi OpenAI `unsupported_country_region_territory` khi Cloudflare Worker gọi thẳng OpenAI TTS.
 
-## Logic mới
+## Logic mới nè
 
 - User chọn voice GPT: Cloudflare Worker gọi RunPod với `action: "openai_tts"`; RunPod gọi `gpt-4o-mini-tts` và upload audio lên R2.
 - User chọn voice public/clone: Cloudflare Worker gọi RunPod với `action: "text_to_audio"`; RunPod dùng OmniVoice và upload audio lên R2.
