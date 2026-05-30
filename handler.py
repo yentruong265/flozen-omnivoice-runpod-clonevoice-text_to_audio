@@ -71,6 +71,7 @@ def synthesize_omnivoice(inp):
     ref_audio_url = inp.get("ref_audio_url") or inp.get("reference_audio_url")
     ref_text = (inp.get("ref_text") or inp.get("reference_text") or "").strip()
     language = inp.get("language", "Vietnamese")
+    language_id = (inp.get("language_id") or inp.get("lang_id") or "").strip()
     num_step = int(inp.get("num_step", 16))
     speed = float(inp.get("speed", 1.0))
     user_id = safe_user_id(inp.get("user_email") or inp.get("user_id"))
@@ -87,14 +88,24 @@ def synthesize_omnivoice(inp):
         ref_path = os.path.join(td, "ref.wav")
         out_path = os.path.join(td, "out.wav")
         download_file(ref_audio_url, ref_path)
-        audio = m.generate(
-            text=text,
-            ref_audio=ref_path,
-            ref_text=ref_text,
-            language=language,
-            num_step=num_step,
-            speed=speed,
-        )
+        generate_kwargs = {
+            "text": text,
+            "ref_audio": ref_path,
+            "ref_text": ref_text,
+            "num_step": num_step,
+            "speed": speed,
+        }
+        # OmniVoice official batch format uses language_id; older local installs may accept language.
+        if language_id:
+            generate_kwargs["language_id"] = language_id
+        else:
+            generate_kwargs["language"] = language
+        try:
+            audio = m.generate(**generate_kwargs)
+        except TypeError:
+            generate_kwargs.pop("language_id", None)
+            generate_kwargs["language"] = language
+            audio = m.generate(**generate_kwargs)
         sf.write(out_path, audio[0], 24000)
         r2_key = f"generated_audio/{user_id}/{job_id}.wav"
         audio_url = upload_to_r2(out_path, r2_key, content_type="audio/wav")
@@ -107,6 +118,8 @@ def synthesize_omnivoice(inp):
         "sample_rate": 24000,
         "model": MODEL_ID,
         "engine": "omnivoice",
+        "language": language,
+        "language_id": language_id or "",
     }
 
 

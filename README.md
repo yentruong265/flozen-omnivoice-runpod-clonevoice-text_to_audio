@@ -55,6 +55,7 @@ DEVICE=cuda:0
     "ref_audio_url": "https://pub-93764efb31b244babb2bc41d8cb399bb.r2.dev/Voice_publich_template/vi/omnivoice_south_male_young_neutral.wav",
     "ref_text": "chuẩn bị tiến tới kỷ năm 20 năm hoạt động trong ngành thủy sản với khát vọng nâng tầm tôm việt và mục tiêu giá trị 1 tỷ đô",
     "language": "Vietnamese",
+    "language_id": "vi",
     "num_step": 16,
     "speed": 1
   }
@@ -76,3 +77,8 @@ Bindings:
 - `R2_BUCKET` = bucket `flozenai-videos`
 
 > Không cần `OPENAI_API_KEY` trên Cloudflare Worker. Key OpenAI phải set trên RunPod.
+
+
+## Language selection
+
+Frontend/Worker gửi thêm `language_id` theo danh sách OmniVoice official `docs/languages.md`. Ví dụ Vietnamese = `vi`, English = `en`, Japanese = `ja`. Handler ưu tiên `language_id`; nếu bản OmniVoice cục bộ chưa hỗ trợ tham số này thì fallback về `language`.
